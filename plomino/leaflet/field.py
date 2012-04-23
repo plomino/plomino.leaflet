@@ -110,21 +110,7 @@ class LeafletField(BaseField):
             js = self.edit_map_js
             js += """
 jq("#plomino_form").submit(function() {
-    var geometries = []
-    geojsonLayer._iterateLayers(function(layer) {
-        if(layer.getLatLng) {
-            latlng = layer.getLatLng();
-            geometries.push('{"type": "Feature", "geometry": {"type": "Point", "coordinates": [' + latlng.lng + ', '+latlng.lat+']}}');
-        }
-        if(layer.getLatLngs) {
-            var latlngs = jq.map(layer.getLatLngs(), function (latlng) {
-                return '[' + latlng.lng + ', '+latlng.lat+']';
-            });
-            geometries.push('{"type": "Feature", "geometry": {"type": "LineString", "coordinates": [' + latlngs.join(',') + ']}}');
-        }
-    }, geojsonLayer);
-    geojson = '{"type": "FeatureCollection", "features": ['+geometries.join(',')+']}';
-    jq("input[name='%s']").val(geojson);
+    jq("input[name='%s']").val(serialize_geometries());
 });
 """ % self.context.id
             return js

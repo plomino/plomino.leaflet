@@ -1,7 +1,110 @@
 <tal:block tal:define="fieldname python:options['fieldname'];
 					   field python:options['field'];
                        param python:field.getSettings().getParameters(edit_mode=True);">
+    <select onchange="map._state=this.value">
+    	<option value="0">Select an action</option>
+    	<option value="1">Add a point</option>
+    	<option value="2">Add a line</option>
+    	<option value="3">Add a polygon</option>
+    	<option value="4">Delete</option>
+    </select>
 	<div id="leafletmapdiv" style="width: 100%%; height: 400px"></div>
+	<script>
+PlominoMap = L.Map.extend({
+
+  STATE_DEFAULT:  0,
+  STATE_ADD_POINT: 1,
+  STATE_ADD_LINE: 2,
+  STATE_ADD_POLYGON: 3,
+  STATE_DELETE: 4,
+
+  initialize: function(/*HTMLElement or String*/ id, /*Object*/ options) {
+      L.Map.prototype.initialize.call(this, id, options);
+      this._mapdiv = $(this._container);
+      this._state = this.STATE_DEFAULT;
+      this._start = null;
+      this._next = null;
+      // Map events
+      this.on('click', this._onClick.bind(this));
+  },
+  addPoint: function (latlng) {
+      marker = new L.Marker(latlng, {draggable: true});
+      marker.on('click', this._layerClick.bind(this));
+      geojsonLayer.addLayer(marker);
+  },
+  addLinePoint: function (latlng) {
+    if(this._start == null) {
+      this._start = new L.Marker(latlng, {draggable: true});
+      this.addLayer(this._start);
+    } else {
+      line = new L.Polyline([this._start.getLatLng(), latlng]);
+      line.editing.enable();
+      line.on('click', this._layerClick.bind(this));
+      geojsonLayer.addLayer(line);
+      this.removeLayer(this._start);
+      this._start = null;
+    }
+  },
+  addPolygonPoint: function (latlng) {
+    if(this._start == null) {
+      this._start = new L.Marker(latlng, {draggable: true});
+      this.addLayer(this._start);
+    } else {
+      if(this._next == null) {
+        this._next = new L.Marker(latlng, {draggable: true});
+        this.addLayer(this._next);
+      } else {
+        polygon = new L.Polygon([this._start.getLatLng(), this._next.getLatLng(), latlng]);
+        polygon.editing.enable();
+        polygon.on('click', this._layerClick.bind(this));
+        geojsonLayer.addLayer(polygon);
+        this.removeLayer(this._start);
+        this.removeLayer(this._next);
+        this._start = null;
+        this._next = null;
+      }
+    }
+  },
+  _onClick: function (event) {
+    if(this._state == this.STATE_ADD_POINT) {
+      this.addPoint(event.latlng);
+    }
+    if(this._state == this.STATE_ADD_LINE) {
+      this.addLinePoint(event.latlng);
+    }
+    if(this._state == this.STATE_ADD_POLYGON) {
+      this.addPolygonPoint(event.latlng);
+    }
+  },
+  _layerClick: function (event) {
+    if(this._state == this.STATE_DELETE) {
+      geojsonLayer.removeLayer(event.target);
+    }
+  }
+});
+
+function serialize_geometries() {
+	var geometries = []
+	geojsonLayer._iterateLayers(function(layer) {
+	    if(layer.getLatLng) {
+	        latlng = layer.getLatLng();
+	        geometries.push('{"type": "Feature", "geometry": {"type": "Point", "coordinates": [' + latlng.lng + ', '+latlng.lat+']}}');
+	    }
+	    if(layer.getLatLngs) {
+	    	var latlngs = jq.map(layer.getLatLngs(), function (latlng) {
+	            return '[' + latlng.lng + ', '+latlng.lat+']';
+	        });
+	    	if(layer instanceof L.Polygon) {
+	        	geometries.push('{"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [[' + latlngs.join(',') + ']]}}');
+	        } else {
+		        geometries.push('{"type": "Feature", "geometry": {"type": "LineString", "coordinates": [' + latlngs.join(',') + ']}}');
+		    }
+	    }
+	}, geojsonLayer);
+	geojson = '{"type": "FeatureCollection", "features": ['+geometries.join(',')+']}';
+	return geojson;
+}
+	</script>
 	<script tal:content="structure string:var json_source='./tojson?item=${fieldname}'"></script>
 	<script tal:content="structure param"></script>
 	<input type="hidden" tal:attributes="name fieldname;" />
