@@ -1,0 +1,22 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:five="http://namespaces.zope.org/five"
+    xmlns:i18n="http://namespaces.zope.org/i18n"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    i18n_domain="plomino.leaflet">
+     
+   <include package="Products.CMFPlomino.fields"/>
+   
+   <adapter
+        for="Products.CMFPlomino.interfaces.IPlominoField"
+        provides=".field.ILeafletField"
+        factory=".field.LeafletField"
+        />
+
+   <browser:page
+        name="leafletsettings"
+        for="Products.CMFPlomino.interfaces.IPlominoField"
+        class=".field.SettingForm"
+        permission="plomino.DESIGN_PERMISSION"
+        />
+</configure>
