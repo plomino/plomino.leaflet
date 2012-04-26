@@ -48,9 +48,6 @@ geojsonLayer.on("featureparse", function(e) {
         if (e.properties.style && e.layer.setStyle) {
             e.layer.setStyle(e.properties.style);
         }
-        if (e.properties.radius && e.layer.setRadius) {
-            e.layer.setRadius(e.properties.radius);
-        }
     }
 });
 

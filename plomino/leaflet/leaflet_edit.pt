@@ -77,8 +77,7 @@ PlominoEditableGeoJSON = L.GeoJSON.extend({
 			this.addGeoJSON(geojson);
 		}
 	},
-	getGeoJSON: function () {
-	
+	layerToJSON: function(layer) {
 		coord2str = function (obj) {  
 		    if(obj.lng) return '[' + obj.lng + ', '+obj.lat+']';
 		    var n, json = [];  
@@ -86,22 +85,33 @@ PlominoEditableGeoJSON = L.GeoJSON.extend({
 	            json.push(coord2str(obj[n]));
 	        }
 	        return ("[" + String(json) + "]");    
-		};  
-	
+		};
+		var json = '';
+		if(layer.getLatLng) json = '{"type": "Feature", "geometry": {"type": "Point", "coordinates": '+coord2str(layer.getLatLng())+'}}';
+		if(layer.getLatLngs) {
+	    	if(layer instanceof L.Polygon) {
+	    		json = '{"type": "Feature", "geometry": {"type": "Polygon", "coordinates": ['+coord2str(layer.getLatLngs())+']}}';
+	    	} else {
+		    	if(layer instanceof L.MultiPolygon) json = '{"type": "Feature", "geometry": {"type": "MultiPolygon", "coordinates": '+coord2str(layer.getLatLngs())+'}}';
+		    	if(layer instanceof L.Polyline) json = '{"type": "Feature", "geometry": {"type": "LineString", "coordinates": '+coord2str(layer.getLatLngs())+'}}';
+		    	if(layer instanceof L.MultiPolyline) json = '{"type": "Feature", "geometry": {"type": "MultiLineString", "coordinates": '+coord2str(layer.getLatLngs())+'}}';
+	    	}
+	    }
+		return json;
+	},
+	getGeoJSON: function () {
 		var geojson = [];
-		this._iterateLayers(function(layer) {
-		    if(layer.getLatLng) geojson.push('{"type": "Feature", "geometry": {"type": "Point", "coordinates": '+coord2str(layer.getLatLng())+'}}');
-		    if(layer.getLatLngs) {
-		    	if(layer instanceof L.Polygon) {
-		    		geojson.push('{"type": "Feature", "geometry": {"type": "Polygon", "coordinates": ['+coord2str(layer.getLatLngs())+']}}');
-		    	} else {
-			    	if(layer instanceof L.MultiPolygon) geojson.push('{"type": "Feature", "geometry": {"type": "MultiPolygon", "coordinates": '+coord2str(layer.getLatLngs())+'}}');
-			    	if(layer instanceof L.Polyline) geojson.push('{"type": "Feature", "geometry": {"type": "LineString", "coordinates": '+coord2str(layer.getLatLngs())+'}}');
-			    	if(layer instanceof L.MultiPolyline) geojson.push('{"type": "Feature", "geometry": {"type": "MultiLineString", "coordinates": '+coord2str(layer.getLatLngs())+'}}');
-		    	}
-		    }
-		}, this);
+		this._iterateLayers(function(layer) {geojson.push(this.layerToJSON(layer)); }, this);
 		return '{"type": "FeatureCollection", "features": ['+String(geojson)+']}';
+	},
+	addLayer: function (layer) {
+		L.GeoJSON.prototype.addLayer.call(this, layer);
+		layer.on('click', this._layerClick.bind(this));
+	},
+	_layerClick: function (event) {
+	    if(this._map._state == this._map.STATE_DELETE) {
+	      this.removeLayer(event.layer);
+	    }
 	}
 });
 PlominoEditableMap = L.Map.extend({
@@ -123,7 +133,6 @@ PlominoEditableMap = L.Map.extend({
   },
   addPoint: function (latlng) {
       marker = new L.Marker(latlng, {draggable: true});
-      marker.on('click', this._layerClick.bind(this));
       geojsonLayer.addLayer(marker);
   },
   addLinePoint: function (latlng) {
@@ -133,7 +142,6 @@ PlominoEditableMap = L.Map.extend({
     } else {
       line = new L.Polyline([this._start.getLatLng(), latlng]);
       line.editing.enable();
-      line.on('click', this._layerClick.bind(this));
       geojsonLayer.addLayer(line);
       this.removeLayer(this._start);
       this._start = null;
@@ -150,7 +158,6 @@ PlominoEditableMap = L.Map.extend({
       } else {
         polygon = new L.Polygon([this._start.getLatLng(), this._next.getLatLng(), latlng]);
         polygon.editing.enable();
-        polygon.on('click', this._layerClick.bind(this));
         geojsonLayer.addLayer(polygon);
         this.removeLayer(this._start);
         this.removeLayer(this._next);
@@ -168,11 +175,6 @@ PlominoEditableMap = L.Map.extend({
     }
     if(this._state == this.STATE_ADD_POLYGON) {
       this.addPolygonPoint(event.latlng);
-    }
-  },
-  _layerClick: function (event) {
-    if(this._state == this.STATE_DELETE) {
-      geojsonLayer.removeLayer(event.target);
     }
   }
 });
