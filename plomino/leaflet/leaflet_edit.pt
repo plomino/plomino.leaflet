@@ -1,9 +1,11 @@
 <tal:block tal:define="fieldname python:options['fieldname'];
 					   field python:options['field'];
                        param python:field.getSettings().getParameters(edit_mode=True);">
-    <div tal:condition="python:options['field'].getSettings().find_location in ['BOTH', 'EDIT']"
+<div id="leaflet-field">
+<div id="leaflet-tools" style="float:right; margin-left: 4em; position: relative; width: auto; z-index:10; background: none repeat scroll 0 0 rgba(0, 0, 0, 0.25)">
+    <span tal:condition="python:options['field'].getSettings().find_location in ['BOTH', 'EDIT']"
     	tal:define="geonames_param python:options['field'].getSettings().geonames_parameters">
-    	<input style="z-index: 10; position: relative;" type="text"
+    	<input style="z-index: 150; position: relative;" type="text"
     			id="geonames_search" value="[Enter a location]"
     			onclick="this.value=''"
     			onkeypress="if(event.which == 13) {search_and_go(this.value); return false;}"/>
@@ -47,15 +49,35 @@ function search_and_go(query) {
 	);
 }
     	</script>
-    </div>
+    </span>
     <select onchange="map._state=this.value">
     	<option value="0">Select an action</option>
     	<option value="1">Add a point</option>
     	<option value="2">Add a line</option>
     	<option value="3">Add a polygon</option>
     	<option value="4">Delete</option>
-    </select>
-	<div id="leafletmapdiv" style="width: 100%%; height: 400px"></div>
+    </select><img src="fullscreenexpand_icon.png" onclick="toggle_fullscreen()"/>
+    <img src="fullscreenexpand_icon.png" onclick="map.invalidateSize()"/>
+<script>
+var original_scroll;
+function toggle_fullscreen() {
+	var field = jq('#leaflet-field');
+	var map_div = jq('#leafletmapdiv');
+	if(field.attr('style')==undefined || field.attr('style')=='') {
+		field.attr('style', "background-color: white; position: fixed; height: 100%; width: 100%; top: 0; left: 0; z-index: 100");
+		map_div.css('height', '100%');
+		original_scroll = jq(document).scrollTop();
+		jq(document).scrollTop(0);
+	} else {
+		field.attr('style', '');
+		map_div.css('height', '400px');
+		jq(document).scrollTop(original_scroll);
+	}
+	map.invalidateSize();
+}
+</script>
+</div>
+	<div id="leafletmapdiv" style="clear: both; width: 100%%; height: 400px; top: -2em"></div>
 	<script>
 PlominoEditableGeoJSON = L.GeoJSON.extend({
 	initialize: function (geojson, options) {
@@ -182,4 +204,5 @@ PlominoEditableMap = L.Map.extend({
 	<script tal:content="structure string:var json_source='./tojson?item=${fieldname}'"></script>
 	<script tal:content="structure param"></script>
 	<input type="hidden" tal:attributes="name fieldname;" />
+</div>
 </tal:block>
