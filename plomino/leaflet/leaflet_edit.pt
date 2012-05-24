@@ -2,7 +2,7 @@
 					   field python:options['field'];
                        param python:field.getSettings().getParameters(edit_mode=True);">
 <div id="leaflet-field">
-<div id="leaflet-tools" style="float:right; margin-left: 4em; position: relative; width: auto; z-index:10; background: none repeat scroll 0 0 rgba(0, 0, 0, 0.25)">
+<!--<div id="leaflet-tools" style="float:left; margin-left: 4em; position: relative; width: auto; z-index:10; background: none repeat scroll 0 0 rgba(0, 0, 0, 0.25)">
     <span tal:condition="python:options['field'].getSettings().find_location in ['BOTH', 'EDIT']"
     	tal:define="geonames_param python:options['field'].getSettings().geonames_parameters">
     	<input style="z-index: 150; position: relative;" type="text"
@@ -57,7 +57,6 @@ function search_and_go(query) {
     	<option value="3">Add a polygon</option>
     	<option value="4">Delete</option>
     </select><img src="fullscreenexpand_icon.png" onclick="toggle_fullscreen()"/>
-    <img src="fullscreenexpand_icon.png" onclick="map.invalidateSize()"/>
 <script>
 var original_scroll;
 function toggle_fullscreen() {
@@ -76,9 +75,128 @@ function toggle_fullscreen() {
 	map.invalidateSize();
 }
 </script>
-</div>
-	<div id="leafletmapdiv" style="clear: both; width: 100%%; height: 400px; top: -2em"></div>
+</div>-->
+	<select id="leaflet-editor-control" style="display: none;" onchange="map._state=this.value">
+    	<option value="0">Select an action</option>
+    	<option value="1">Add a point</option>
+    	<option value="2">Add a line</option>
+    	<option value="3">Add a polygon</option>
+    	<option value="4">Delete</option>
+    </select>
+    <input id="leaflet-locator-control" style="display: none;" type="text"
+    			value="[Enter a location]"
+    			onclick="this.value=''"
+    			onkeypress="if(event.which == 13) {search_and_go(this.value); return false;}"/>
+	<div id="leafletmapdiv" style="width: 100%%; height: 400px"></div>
 	<script>
+L.Control.Fullscreen = L.Control.extend({
+	options: {
+		position: 'topright'
+	},
+
+	onAdd: function (map) {
+		var className = 'leaflet-control-zoom',
+		container = L.DomUtil.create('div', className);
+		var link = L.DomUtil.create('a', className, container);
+		link.href = '#';
+		link.title = "Fullscreen";
+		link.style.backgroundImage = "url(fullscreenexpand_icon.png)";
+		L.DomEvent
+			.addListener(link, 'click', L.DomEvent.stopPropagation)
+			.addListener(link, 'click', L.DomEvent.preventDefault)
+			.addListener(link, 'click', function() {
+					if(L.DomUtil.hasClass(map._container, "leaflet-fullscreen")) {
+						L.DomUtil.removeClass(map._container, "leaflet-fullscreen");
+						jq(document).scrollTop(map._originalscroll);
+					} else {
+						L.DomUtil.addClass(map._container, "leaflet-fullscreen");
+						map._originalscroll = jq(document).scrollTop();
+						jq(document).scrollTop(0);
+					}
+					map.invalidateSize();
+				}, map);
+
+		return container;
+	}
+});
+
+L.Control.Editor = L.Control.extend({
+	options: {
+		position: 'topright'
+	},
+
+	onAdd: function (map) {
+		var className = 'leaflet-control-zoom',
+		container = L.DomUtil.create('div', className);
+		el = jq('#leaflet-editor-control').clone();
+		jq(container).append(el);
+		el.attr('style', '');
+		jq(el).autocomplete({
+	    	select: function(event, ui) {
+	    		search_and_go(ui.item.value);
+	    	},
+		    source: function(req, add){            
+	            jq.getJSON("http://ws.geonames.org/searchJSON?maxRows=15&name_startsWith="+jq("#geonames_search").val()+"&"+geonames_param, req,
+	                function(data) {  
+	                    var suggestions = [];  
+	
+	                    //read names in results  
+	                    data = data.geonames;
+	                    jq.each(data, function(i, val){  
+	                        suggestions.push(val.name); 
+	                    });
+	
+	                    //give values to add callback  
+	                    add(suggestions);
+	                }
+	            );
+	        }
+	    });
+		L.DomEvent
+			.addListener(container, 'click', L.DomEvent.stopPropagation)
+			.addListener(container, 'click', L.DomEvent.preventDefault);
+		return container;
+	}
+});
+
+L.Control.FindLocation = L.Control.extend({
+	options: {
+		position: 'topright'
+	},
+
+	onAdd: function (map) {
+		var className = 'leaflet-control-zoom',
+		container = L.DomUtil.create('div', className);
+		el = jq('#leaflet-locator-control').clone();
+		jq(container).append(el);
+		el.attr('style', 'z-index:150');
+		L.DomEvent
+			.addListener(container, 'click', L.DomEvent.stopPropagation)
+			.addListener(container, 'click', L.DomEvent.preventDefault);
+		return container;
+	}
+});
+
+L.Map.mergeOptions({
+	allowFullscreen: true,
+	editor: true,
+	findlocation: false
+});
+
+L.Map.addInitHook(function () {
+	if (this.options.allowFullscreen) {
+		this.fullscreenControl = new L.Control.Fullscreen();
+		this.addControl(this.fullscreenControl);
+	}
+	if (this.options.editor) {
+		this.editor = new L.Control.Editor();
+		this.addControl(this.editor);
+	}
+	if (this.options.findlocation) {
+		this.findlocation = new L.Control.FindLocation();
+		this.addControl(this.findlocation);
+	}
+});
 PlominoEditableGeoJSON = L.GeoJSON.extend({
 	initialize: function (geojson, options) {
 		L.Util.setOptions(this, options);
