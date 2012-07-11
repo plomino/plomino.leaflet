@@ -89,6 +89,19 @@ function toggle_fullscreen() {
     			onkeypress="if(event.which == 13) {search_and_go(this.value); return false;}"/>
 	<div id="leafletmapdiv" style="width: 100%%; height: 400px"></div>
 	<script>
+function search_and_go(query) {
+	jq.getJSON("http://ws.geonames.org/searchJSON?q="+ query +"&maxRows=1&"+geonames_param, null,
+		function(data) {
+			data = data.geonames;
+			if(data.length > 0) {
+				var center = new L.LatLng(data[0].lat, data[0].lng);
+				map.setView(center, 14);
+			} else {
+				alert("No matching place.");
+			}
+    	}
+	);
+}
 L.Control.Fullscreen = L.Control.extend({
 	options: {
 		position: 'topright'
@@ -136,7 +149,7 @@ L.Control.Editor = L.Control.extend({
 	    		search_and_go(ui.item.value);
 	    	},
 		    source: function(req, add){            
-	            jq.getJSON("http://ws.geonames.org/searchJSON?maxRows=15&name_startsWith="+jq("#geonames_search").val()+"&"+geonames_param, req,
+	            jq.getJSON("http://ws.geonames.org/searchJSON?maxRows=15&name_startsWith="+jq("#leaflet-locator-control").val()+"&"+geonames_param, req,
 	                function(data) {  
 	                    var suggestions = [];  
 	
@@ -152,16 +165,16 @@ L.Control.Editor = L.Control.extend({
 	            );
 	        }
 	    });
-		L.DomEvent
+		/*L.DomEvent
 			.addListener(container, 'click', L.DomEvent.stopPropagation)
-			.addListener(container, 'click', L.DomEvent.preventDefault);
+			.addListener(container, 'click', L.DomEvent.preventDefault);*/
 		return container;
 	}
 });
 
 L.Control.FindLocation = L.Control.extend({
 	options: {
-		position: 'topright'
+		position: 'bottomleft'
 	},
 
 	onAdd: function (map) {
