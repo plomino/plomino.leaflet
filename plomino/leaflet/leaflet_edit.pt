@@ -253,8 +253,8 @@ PlominoEditableGeoJSON = L.GeoJSON.extend({
         if(layer instanceof L.Marker) {
             layer.options.draggable=true;
         }
+        L.GeoJSON.prototype.addLayer.call(this, layer);
 		layer.on('click', this._layerClick.bind(this));
-		L.GeoJSON.prototype.addLayer.call(this, layer);
 	},
 	_layerClick: function (event) {
 	    if(this._map._state == this._map.STATE_DELETE) {
