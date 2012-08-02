@@ -2,87 +2,6 @@
 					   field python:options['field'];
                        param python:field.getSettings().getParameters(edit_mode=True);">
 <div id="leaflet-field">
-<!--<div id="leaflet-tools" style="float:left; margin-left: 4em; position: relative; width: auto; z-index:10; background: none repeat scroll 0 0 rgba(0, 0, 0, 0.25)">
-    <span tal:condition="python:options['field'].getSettings().find_location in ['BOTH', 'EDIT']"
-    	tal:define="geonames_param python:options['field'].getSettings().geonames_parameters">
-    	<input style="z-index: 150; position: relative;" type="text"
-    			id="geonames_search" value="[Enter a location]"
-    			onclick="this.value=''"
-    			onkeypress="if(event.which == 13) {search_and_go(this.value); return false;}"/>
-    	<script tal:content="structure string:var geonames_param='${geonames_param}'"></script>
-    	<script>
-jq(function() {
-    jq( "#geonames_search" ).autocomplete({
-    	select: function(event, ui) {
-    		search_and_go(ui.item.value);
-    	},
-	    source: function(req, add){            
-            jq.getJSON("http://ws.geonames.org/searchJSON?maxRows=15&name_startsWith="+jq("#geonames_search").val()+"&"+geonames_param, req,
-                function(data) {  
-                    var suggestions = [];  
-
-                    //read names in results  
-                    data = data.geonames;
-                    jq.each(data, function(i, val){  
-                        suggestions.push(val.name); 
-                    });
-
-                    //give values to add callback  
-                    add(suggestions);
-                }
-            );
-        }
-    });
-});
-
-function search_and_go(query) {
-	jq.getJSON("http://ws.geonames.org/searchJSON?q="+ query +"&maxRows=1&"+geonames_param, null,
-		function(data) {
-			data = data.geonames;
-			if(data.length > 0) {
-				var center = new L.LatLng(data[0].lat, data[0].lng);
-				map.setView(center, 14);
-			} else {
-				alert("No matching place.");
-			}
-    	}
-	);
-}
-    	</script>
-    </span>
-    <select onchange="map._state=this.value">
-    	<option value="0">Select an action</option>
-    	<option value="1">Add a point</option>
-    	<option value="2">Add a line</option>
-    	<option value="3">Add a polygon</option>
-    	<option value="4">Delete</option>
-    </select><img src="fullscreenexpand_icon.png" onclick="toggle_fullscreen()"/>
-<script>
-var original_scroll;
-function toggle_fullscreen() {
-	var field = jq('#leaflet-field');
-	var map_div = jq('#leafletmapdiv');
-	if(field.attr('style')==undefined || field.attr('style')=='') {
-		field.attr('style', "background-color: white; position: fixed; height: 100%; width: 100%; top: 0; left: 0; z-index: 100");
-		map_div.css('height', '100%');
-		original_scroll = jq(document).scrollTop();
-		jq(document).scrollTop(0);
-	} else {
-		field.attr('style', '');
-		map_div.css('height', '400px');
-		jq(document).scrollTop(original_scroll);
-	}
-	map.invalidateSize();
-}
-</script>
-</div>-->
-	<div id="leaflet-editor-control" style="display: none;">
-        <a href="#" onclick="map._state=0; return false;">0</a>
-        <a href="#" onclick="map._state=1; return false;">Pt</a>
-        <a href="#" onclick="map._state=2; return false;">Ln</a>
-        <a href="#" onclick="map._state=3; return false;">Pg</a>
-        <a href="#" onclick="map._state=4; return false;">Del</a>
-    </div>
     <input id="leaflet-locator-control" style="display: none;" type="text"
     			value="[Enter a location]"
     			onclick="this.value=''"
@@ -141,12 +60,27 @@ L.Control.Editor = L.Control.extend({
 	onAdd: function (map) {
 		var className = 'leaflet-control-zoom';
 		var container = L.DomUtil.create('div', className);
-		var el = jq('#leaflet-editor-control').clone();
-		jq(container).append(el);
-		el.attr('style', '');
-		L.DomEvent.addListener(container, 'click', L.DomEvent.stopPropagation);
+		this._createButton('Add point', className + '-point', container, function() {map.toggleState(map.STATE_ADD_POINT);}, map);
+		this._createButton('Add line', className + '-line', container, function() {map.toggleState(map.STATE_ADD_LINE);}, map);
+		this._createButton('Add polygon', className + '-polygon', container, function() {map.toggleState(map.STATE_ADD_POLYGON);}, map);
+		this._createButton('Add delete', className + '-delete', container, function() {map.toggleState(map.STATE_DELETE);}, map);
 		return container;
-	}
+	},
+        
+    _createButton: function (title, className, container, fn, context) {
+        var link = L.DomUtil.create('a', className, container);
+        link.href = '#';
+        link.title = title;
+
+        L.DomEvent
+            .on(link, 'click', L.DomEvent.stopPropagation)
+            .on(link, 'click', L.DomEvent.preventDefault)
+            .on(link, 'click', fn, context)
+            .on(link, 'dblclick', L.DomEvent.stopPropagation);
+
+        return link;
+    }
+	
 });
 
 L.Control.FindLocation = L.Control.extend({
@@ -278,6 +212,13 @@ PlominoEditableMap = L.Map.extend({
       this._next = null;
       // Map events
       this.on('click', this._onClick.bind(this));
+  },
+  toggleState: function(state) {
+      if(this._state == state) {
+          this._state = this.STATE_DEFAULT;
+      } else {
+          this._state = state;
+      }
   },
   addPoint: function (latlng) {
       marker = new L.Marker(latlng, {draggable: true});
