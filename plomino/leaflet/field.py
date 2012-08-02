@@ -76,7 +76,7 @@ map.setView(new L.LatLng(37, 16), 5)
    .addLayer(geojsonLayer);
 
 jq.getJSON(json_source, '', function(data){
-    geojsonLayer.addGeoJSON(data);
+    geojsonLayer.addData(data);
     map.fitBounds(geojsonLayer.getBounds());
 });
 """,
