@@ -243,7 +243,7 @@ PlominoEditableGeoJSON = L.GeoJSON.extend({
 	},
 	getGeoJSON: function () {
 		var geojson = [];
-		this.eachLayers(function(layer) {geojson.push(this.layerToJSON(layer)); }, this);
+		this.eachLayer(function(layer) {geojson.push(this.layerToJSON(layer)); }, this);
 		return '{"type": "FeatureCollection", "features": ['+String(geojson)+']}';
 	},
 	addLayer: function (layer) {
