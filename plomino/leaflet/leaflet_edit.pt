@@ -76,13 +76,13 @@ function toggle_fullscreen() {
 }
 </script>
 </div>-->
-	<select id="leaflet-editor-control" style="display: none;" onchange="map._state=this.value">
-    	<option value="0">Select an action</option>
-    	<option value="1">Add a point</option>
-    	<option value="2">Add a line</option>
-    	<option value="3">Add a polygon</option>
-    	<option value="4">Delete</option>
-    </select>
+	<div id="leaflet-editor-control" style="display: none;">
+        <a href="#" onclick="map._state=0; return false;">0</a>
+        <a href="#" onclick="map._state=1; return false;">Pt</a>
+        <a href="#" onclick="map._state=2; return false;">Ln</a>
+        <a href="#" onclick="map._state=3; return false;">Pg</a>
+        <a href="#" onclick="map._state=4; return false;">Del</a>
+    </div>
     <input id="leaflet-locator-control" style="display: none;" type="text"
     			value="[Enter a location]"
     			onclick="this.value=''"
@@ -108,8 +108,8 @@ L.Control.Fullscreen = L.Control.extend({
 	},
 
 	onAdd: function (map) {
-		var className = 'leaflet-control-zoom',
-		container = L.DomUtil.create('div', className);
+		var className = 'leaflet-control-zoom';
+		var container = L.DomUtil.create('div', className);
 		var link = L.DomUtil.create('a', className, container);
 		link.href = '#';
 		link.title = "Fullscreen";
@@ -139,35 +139,12 @@ L.Control.Editor = L.Control.extend({
 	},
 
 	onAdd: function (map) {
-		var className = 'leaflet-control-zoom',
-		container = L.DomUtil.create('div', className);
-		el = jq('#leaflet-editor-control').clone();
+		var className = 'leaflet-control-zoom';
+		var container = L.DomUtil.create('div', className);
+		var el = jq('#leaflet-editor-control').clone();
 		jq(container).append(el);
 		el.attr('style', '');
-		jq(el).autocomplete({
-	    	select: function(event, ui) {
-	    		search_and_go(ui.item.value);
-	    	},
-		    source: function(req, add){            
-	            jq.getJSON("http://ws.geonames.org/searchJSON?maxRows=15&name_startsWith="+jq("#leaflet-locator-control").val()+"&"+geonames_param, req,
-	                function(data) {  
-	                    var suggestions = [];  
-	
-	                    //read names in results  
-	                    data = data.geonames;
-	                    jq.each(data, function(i, val){  
-	                        suggestions.push(val.name); 
-	                    });
-	
-	                    //give values to add callback  
-	                    add(suggestions);
-	                }
-	            );
-	        }
-	    });
-		/*L.DomEvent
-			.addListener(container, 'click', L.DomEvent.stopPropagation)
-			.addListener(container, 'click', L.DomEvent.preventDefault);*/
+		L.DomEvent.addListener(container, 'click', L.DomEvent.stopPropagation);
 		return container;
 	}
 });
@@ -178,11 +155,32 @@ L.Control.FindLocation = L.Control.extend({
 	},
 
 	onAdd: function (map) {
-		var className = 'leaflet-control-zoom',
-		container = L.DomUtil.create('div', className);
-		el = jq('#leaflet-locator-control').clone();
+		var className = 'leaflet-control-zoom';
+		var container = L.DomUtil.create('div', className);
+		var el = jq('#leaflet-locator-control').clone();
 		jq(container).append(el);
 		el.attr('style', 'z-index:150');
+		jq(el).autocomplete({
+            select: function(event, ui) {
+                search_and_go(ui.item.value);
+            },
+            source: function(req, add){            
+                jq.getJSON("http://ws.geonames.org/searchJSON?maxRows=15&name_startsWith="+jq("#leaflet-locator-control").val()+"&"+geonames_param, req,
+                    function(data) {  
+                        var suggestions = [];  
+    
+                        //read names in results  
+                        data = data.geonames;
+                        jq.each(data, function(i, val){  
+                            suggestions.push(val.name); 
+                        });
+    
+                        //give values to add callback  
+                        add(suggestions);
+                    }
+                );
+            }
+        });
 		L.DomEvent
 			.addListener(container, 'click', L.DomEvent.stopPropagation)
 			.addListener(container, 'click', L.DomEvent.preventDefault);
@@ -227,7 +225,7 @@ PlominoEditableGeoJSON = L.GeoJSON.extend({
 		});
 
 		if (geojson) {
-			this.addGeoJSON(geojson);
+			this.addData(geojson);
 		}
 	},
 	layerToJSON: function(layer) {
@@ -243,18 +241,18 @@ PlominoEditableGeoJSON = L.GeoJSON.extend({
 		if(layer.getLatLng) json = '{"type": "Feature", "geometry": {"type": "Point", "coordinates": '+coord2str(layer.getLatLng())+'}}';
 		if(layer.getLatLngs) {
 	    	if(layer instanceof L.Polygon) {
-	    		json = '{"type": "Feature", "geometry": {"type": "Polygon", "coordinates": ['+coord2str(layer.getLatLngs())+']}}';
+                json = '{"type": "Feature", "geometry": {"type": "Polygon", "coordinates": ['+coord2str(layer.getLatLngs())+']}}';
 	    	} else {
-		    	if(layer instanceof L.MultiPolygon) json = '{"type": "Feature", "geometry": {"type": "MultiPolygon", "coordinates": '+coord2str(layer.getLatLngs())+'}}';
-		    	if(layer instanceof L.Polyline) json = '{"type": "Feature", "geometry": {"type": "LineString", "coordinates": '+coord2str(layer.getLatLngs())+'}}';
-		    	if(layer instanceof L.MultiPolyline) json = '{"type": "Feature", "geometry": {"type": "MultiLineString", "coordinates": '+coord2str(layer.getLatLngs())+'}}';
+		        if(layer instanceof L.MultiPolygon) json = '{"type": "Feature", "geometry": {"type": "MultiPolygon", "coordinates": '+coord2str(layer.getLatLngs())+'}}';
+		        if(layer instanceof L.Polyline) json = '{"type": "Feature", "geometry": {"type": "LineString", "coordinates": '+coord2str(layer.getLatLngs())+'}}';
+		        if(layer instanceof L.MultiPolyline) json = '{"type": "Feature", "geometry": {"type": "MultiLineString", "coordinates": '+coord2str(layer.getLatLngs())+'}}';
 	    	}
 	    }
 		return json;
 	},
 	getGeoJSON: function () {
 		var geojson = [];
-		this._iterateLayers(function(layer) {geojson.push(this.layerToJSON(layer)); }, this);
+		this.eachLayers(function(layer) {geojson.push(this.layerToJSON(layer)); }, this);
 		return '{"type": "FeatureCollection", "features": ['+String(geojson)+']}';
 	},
 	addLayer: function (layer) {
