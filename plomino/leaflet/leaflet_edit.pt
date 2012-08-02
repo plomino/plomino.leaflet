@@ -215,15 +215,6 @@ PlominoEditableGeoJSON = L.GeoJSON.extend({
 		this._geojson = geojson;
 		this._layers = {};
 
-		this.on("featureparse", function(e) {
-		    if(e.layer.editing) {
-		        e.layer.editing.enable();
-		    }
-		    if(e.geometryType == "Point") {
-		        e.layer.options.draggable = true;
-		    }
-		});
-
 		if (geojson) {
 			this.addData(geojson);
 		}
@@ -256,8 +247,14 @@ PlominoEditableGeoJSON = L.GeoJSON.extend({
 		return '{"type": "FeatureCollection", "features": ['+String(geojson)+']}';
 	},
 	addLayer: function (layer) {
-		L.GeoJSON.prototype.addLayer.call(this, layer);
+		if(layer.editing) {
+            layer.editing.enable();
+        }
+        if(layer instanceof L.Marker) {
+            layer.options.draggable=true;
+        }
 		layer.on('click', this._layerClick.bind(this));
+		L.GeoJSON.prototype.addLayer.call(this, layer);
 	},
 	_layerClick: function (event) {
 	    if(this._map._state == this._map.STATE_DELETE) {
