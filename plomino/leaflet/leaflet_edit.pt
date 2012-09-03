@@ -1,6 +1,47 @@
 <tal:block tal:define="fieldname python:options['fieldname'];
 					   field python:options['field'];
                        param python:field.getSettings().getParameters(edit_mode=True);">
+<style>
+.leaflet-control-editor {
+    -moz-border-radius: 7px;
+    -webkit-border-radius: 7px;
+    border-radius: 7px;
+    padding: 5px;
+    background: rgba(0, 0, 0, 0.25);
+    }
+.leaflet-control-editor a {
+    background-color: rgba(255, 255, 255, 0.75);
+    background-position: 50% 50%;
+    background-repeat: no-repeat;
+    display: block;
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    border-radius: 4px;
+    width: 19px;
+    height: 19px;
+    width: 27px;
+    height: 27px;
+    }
+.leaflet-control-editor a:hover {
+    background-color: #fff;
+    } 
+.leaflet-control-editor-point {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3AUWCQEXgaN+zgAAAUFJREFUKM91kb8rhHEcx1+f5znuOiyXTVkYDHZJJEqZzAaD8jewsCirZBED6kZ1WWSgGOg6yiAyyGDQlR9x7vy45/t8vx/Dc4en+Czfer/evfp++gjfM5vSfkb9jLnytsvXyy5KpY5nOptX00MJQKm6t/nKwmII4Ed4LpXcTg84nBpRxUsOBqWjPIAXFT5HUr2GQFulG8RpSHo+Iono0VGHoUPGEbrJimpDU0RqBpKOkBYE8GjEUvtj3WCOw0mnl5IkwwUVVKyNGbzc+4NKiTy73FBVj/JKRGpbdJlUwh8OMQRYFTGEY4XKL8Om/cyZomLVYlGCpfJjzADy3NZOjxVVEX2qTq/dxbfgxL7mpGixWGzu9ryeez+3WD8MzlAn3v3r1o75owAvS75Bg8LG3k8WK2T3P059W17k/5nomzqIJ1+X44iKUe83CgAAAABJRU5ErkJggg==);
+    margin-bottom: 5px;
+    }
+.leaflet-control-editor-line {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAA3NCSVQICAjb4U/gAAAAKlBMVEX///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADmU0mKAAAADnRSTlMAESIzRFVmd4iZqrvM3UwhkGcAAAAJcEhZcwABfaQAAX2kAQcDEaIAAAAfdEVYdFNvZnR3YXJlAE1hY3JvbWVkaWEgRmlyZXdvcmtzIDi1aNJ4AAAAUUlEQVQImWNgwAUaoTTzAiiDMwFIpAGxjgADA+OeAgaGCiCHvXGGAMMlIINXQWIhK0htJgNDrbUBUMkhBgaWPUABsKgREHM5QI3yglnigm4rAERHC+XASXTLAAAAAElFTkSuQmCC);
+    margin-bottom: 5px;
+    }
+.leaflet-control-editor-polygon {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAA3NCSVQICAjb4U/gAAAAh1BMVEX///8AAAAAAAAAAAAAAAAAAAAAAAAQEBAAAAAJCQkAAAAQEBAJCQkZGRkQEBAAAAAZGRkQEBAZGRkJCQkrKysfHx8ZGRkQEBBCQkI5OTkzMzMrKysQEBAJCQm1tbWqqqqlpaWZmZmSkpKKioqCgoJ7e3t3d3dqampjY2NZWVlQUFBISEg5OTkxQAYCAAAALXRSTlMAESIzRFVmd3eIiJmZqqqqu7vMzN3d3d3u7u7u7u7///////////////////+5gBgxAAAACXBIWXMAAX2kAAF9pAEHAxGiAAAAH3RFWHRTb2Z0d2FyZQBNYWNyb21lZGlhIEZpcmV3b3JrcyA4tWjSeAAAAIFJREFUGJVlz8sagiAQgFHQUKw0xVuWjuSd6v2fLwFnof0Lhu+sZgj563aEJqV7CL7C2cGpmkrXfh1+WV+at2PO1smi4l1oj3roMj8oqwFeQgNXAPKpJAB0sQY3A6w3QIREGEMD1xlh5gbYHWGxQGsE5dmFks9ie7BtwzPfOpyl+wGnjQzI80n2DwAAAABJRU5ErkJggg==);
+    margin-bottom: 5px;
+    }
+.leaflet-control-editor-delete {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAT5JREFUeNqUU0uKhDAQjUOvBBFRXIjgTr2Al+hzeAbPIC5cuBahL9FX8A4uXIgIIohL/5lJoCRmtIcJFFUvqXr18hMwxuhuRFGEi6JAtm2jIAiEq5yvu2Lf9ylzmqYCi/khsAqyLMPbtqF1Xakty0L9PM80BkwsjmPhRPB6vbDneTRpmqbDxnGkBjHxhLAsS5QkifCA7oQoz3MECqAjSWYxKIDGpy2EYYhd1z0kE08MugJZVVXH2ZwOUVVVZJrmgR3HOTpZlkXXFUVBoihe3wJJ3vcdGYZxYF3X6Rxg/tp/EQAJGcSzRTy+VQAJPGZJLglgkdwEq4hX8PElgnyIeUUftwAFrAKY+xcB25H3f26hrmtKIkkS6vuexpqmoa7raPEwDCeSB1v880Debds+m6Y5fSj2CROTZfkNNd8CDABg938S/VLKaAAAAABJRU5ErkJggg==);
+    margin-bottom: 5px;
+    }
+</style>
 <div id="leaflet-field">
     <input id="leaflet-locator-control" style="display: none;" type="text"
     			value="[Enter a location]"
@@ -58,12 +99,12 @@ L.Control.Editor = L.Control.extend({
 	},
 
 	onAdd: function (map) {
-		var className = 'leaflet-control-zoom';
+		var className = 'leaflet-control-editor';
 		var container = L.DomUtil.create('div', className);
 		this._createButton('Add point', className + '-point', container, function() {map.toggleState(map.STATE_ADD_POINT);}, map);
 		this._createButton('Add line', className + '-line', container, function() {map.toggleState(map.STATE_ADD_LINE);}, map);
 		this._createButton('Add polygon', className + '-polygon', container, function() {map.toggleState(map.STATE_ADD_POLYGON);}, map);
-		this._createButton('Add delete', className + '-delete', container, function() {map.toggleState(map.STATE_DELETE);}, map);
+		this._createButton('Delete', className + '-delete', container, function() {map.toggleState(map.STATE_DELETE);}, map);
 		return container;
 	},
         
@@ -91,8 +132,18 @@ L.Control.FindLocation = L.Control.extend({
 	onAdd: function (map) {
 		var className = 'leaflet-control-zoom';
 		var container = L.DomUtil.create('div', className);
-		var el = jq('#leaflet-locator-control').clone();
+		
+		input = document.createElement('input');
+        input.type = 'text';
+        container.appendChild(input);
+        L.DomEvent.on(input, 'focus', function() {alert('yepa');}, this);
+        L.DomEvent
+            .addListener(input, 'click', L.DomEvent.stopPropagation)
+            .addListener(input, 'focus', L.DomEvent.stopPropagation)
+            .addListener(input, 'focus', L.DomEvent.preventDefault);
+		/*var el = jq('#leaflet-locator-control').clone();
 		jq(container).append(el);
+		L.DomEvent.on(el, 'keydown', function() {alert('yo');}, this);
 		el.attr('style', 'z-index:150');
 		jq(el).autocomplete({
             select: function(event, ui) {
@@ -114,10 +165,7 @@ L.Control.FindLocation = L.Control.extend({
                     }
                 );
             }
-        });
-		L.DomEvent
-			.addListener(container, 'click', L.DomEvent.stopPropagation)
-			.addListener(container, 'click', L.DomEvent.preventDefault);
+        });*/
 		return container;
 	}
 });
