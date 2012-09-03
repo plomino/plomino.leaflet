@@ -52,7 +52,7 @@ geojsonLayer.on("featureparse", function(e) {
 });
 
 jq.getJSON(json_source, '', function(data){
-    geojsonLayer.addGeoJSON(data);
+    geojsonLayer.addData(data);
     map.fitBounds(geojsonLayer.getBounds());
 });
 """,
