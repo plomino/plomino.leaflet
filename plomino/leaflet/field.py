@@ -137,7 +137,10 @@ jq("#plomino_form").submit(function() {
     def processInput(self, submittedValue):
         """
         """
-        return json.loads(submittedValue)
+        try:
+            return json.loads(submittedValue)
+        except Exception, e:
+            return {'Error': e}
 
 component.provideUtility(LeafletField, IPlominoField, 'LEAFLET')
 
