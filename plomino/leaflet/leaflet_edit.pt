@@ -95,16 +95,17 @@ L.Control.Fullscreen = L.Control.extend({
 
 L.Control.Editor = L.Control.extend({
 	options: {
-		position: 'topright'
+		position: 'topright',
+		actions: ['point', 'line', 'polygon', 'delete']
 	},
 
 	onAdd: function (map) {
 		var className = 'leaflet-control-editor';
 		var container = L.DomUtil.create('div', className);
-		this._createButton('Add point', className + '-point', container, function() {map.toggleState(map.STATE_ADD_POINT);}, map);
-		this._createButton('Add line', className + '-line', container, function() {map.toggleState(map.STATE_ADD_LINE);}, map);
-		this._createButton('Add polygon', className + '-polygon', container, function() {map.toggleState(map.STATE_ADD_POLYGON);}, map);
-		this._createButton('Delete', className + '-delete', container, function() {map.toggleState(map.STATE_DELETE);}, map);
+		if(this.options.actions.indexOf('point') > -1) this._createButton('Add point', className + '-point', container, function() {map.toggleState(map.STATE_ADD_POINT);}, map);
+		if(this.options.actions.indexOf('line') > -1) this._createButton('Add line', className + '-line', container, function() {map.toggleState(map.STATE_ADD_LINE);}, map);
+		if(this.options.actions.indexOf('polygon') > -1) this._createButton('Add polygon', className + '-polygon', container, function() {map.toggleState(map.STATE_ADD_POLYGON);}, map);
+		if(this.options.actions.indexOf('delete') > -1) this._createButton('Delete', className + '-delete', container, function() {map.toggleState(map.STATE_DELETE);}, map);
 		return container;
 	},
         
@@ -173,6 +174,7 @@ L.Control.FindLocation = L.Control.extend({
 L.Map.mergeOptions({
 	allowFullscreen: true,
 	editor: true,
+	editor_actions: ['point', 'line', 'polygon', 'delete'],
 	findlocation: false
 });
 
@@ -182,7 +184,7 @@ L.Map.addInitHook(function () {
 		this.addControl(this.fullscreenControl);
 	}
 	if (this.options.editor) {
-		this.editor = new L.Control.Editor();
+		this.editor = new L.Control.Editor({actions: this.options.editor_actions});
 		this.addControl(this.editor);
 	}
 	if (this.options.findlocation) {
