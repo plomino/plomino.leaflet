@@ -169,7 +169,7 @@ L.Control.FindLocation = L.Control.extend({
 		input = document.createElement('input');
         input.type = 'text';
         container.appendChild(input);
-        L.DomEvent.on(input, 'focus', function() {alert('yepa');}, this);
+        //L.DomEvent.on(input, 'focus', function() {console.log('yepa');}, this);
         L.DomEvent
             .addListener(input, 'click', L.DomEvent.stopPropagation)
             .addListener(input, 'focus', L.DomEvent.stopPropagation)

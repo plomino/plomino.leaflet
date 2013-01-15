@@ -93,7 +93,7 @@ jq.getJSON(json_source, '', function(data){
                                                            ]),
                     title=u'Location finder',
                     description=u'Allow to center to map to a given location using geonames.org',
-                    default="BOTH",
+                    default="NONE",
                     required=True)
     
     geonames_parameters = TextLine(title=u'Geonames extra parameters',
