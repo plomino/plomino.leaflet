@@ -3,13 +3,26 @@ Description
 
 ``plomino.leaflet`` provides a Leaflet map field type to Plomino.
 
-Usage
-=====
+Installation
+============
 
 Add ``plomino.leaflet`` to your buildout, run the buildout.
 
+Usage
+=====
+
+In read mode, the field just displays its geometries.
+In edit mode, the map contains buttons to create or delete existing geometries.
+The geometry is stored as GeoJSON.
+In the settings tab, Leaflet javascript can be customized for both read or edit mode.
+
 Credits
 ========
+
+Authors
+-------
+
+* Eric BREHAULT <eric.brehault@makina-corpus.org>
 
 Companies
 ---------
