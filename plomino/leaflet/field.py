@@ -15,6 +15,7 @@ from Products.CMFPlomino.fields.dictionaryproperty import DictionaryProperty
 from Products.CMFPlomino.interfaces import IPlominoField
 from Products.CMFPlomino.fields.base import IBaseField, BaseField, BaseForm
 
+
 class ILeafletField(IBaseField):
     """
     Leaflet field schema
@@ -37,22 +38,23 @@ map.setView(new L.LatLng(37, 16), 5);
 /* OR AUTO-LOCATE THE USER */
 // map.locate({setView: true});
 map.addLayer(tilesLayer);
-map.addLayer(geojsonLayer);
 
-/* CUSTOM RENDERING */
-geojsonLayer.on("featureparse", function(e) {
-    if (e.properties) {
-        if (e.properties.popupContent) {
-            e.layer.bindPopup(e.properties.popupContent);
-        }
-        if (e.properties.style && e.layer.setStyle) {
-            e.layer.setStyle(e.properties.style);
-        }
-    }
-});
+var geojsonLayer;
 
 jq.getJSON(json_source, '', function(data){
-    geojsonLayer.addData(data);
+    geojsonLayer = new L.GeoJSON(data, {
+        /* CUSTOM RENDERING */
+        onEachFeature: function(feature, layer) {
+           if (feature.properties) {
+                if (feature.properties.popupContent) {
+                    layer.bindPopup(feature.properties.popupContent);
+                }
+                if (feature.properties.style && layer.setStyle) {
+                    layer.setStyle(feature.properties.style);
+                }
+            }
+        }
+    }).addTo(map);
     map.fitBounds(geojsonLayer.getBounds());
 });
 """,
